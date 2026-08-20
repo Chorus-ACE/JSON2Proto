@@ -1,0 +1,33 @@
+name: Update Assets
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - name: Create build folder
+        run: mkdir build
+      - name: Build
+        run: xcodebuild -project JSON2Proto.xcodeproj -scheme JSON2Proto -configuration Release -derivedDataPath ./build -destination "generic/platform=macOS" -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_STYLE=Manual DEVELOPMENT_TEAM=""
+      - name: Create output folder
+        run: mkdir output
+      - name: Run JSON2Proto
+        run: ./build/JSON2Proto output/
+      - name: Compress results
+        run: |
+          aa archive -i output/gacha.proto -o output/gacha.aar
+          rm -f output/*.proto
+      - name: Commit results
+        env:
+          EXTERNAL_PAT: ${{ secrets.MEMZ_REPO_PAT }}
+        run: |
+          cd output
+          git init
+          git config --global user.email "memz1@darock.top"
+          git config --global user.name "WindowsMEMZ"
+          git remote add origin https://${EXTERNAL_PAT}@github.com/Chorus-ACE/Sekai-Protobuf-Assets.git
+          git commit -m 'Update Assets'
+          git push origin main --force
