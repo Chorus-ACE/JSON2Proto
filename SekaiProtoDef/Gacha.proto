@@ -1,0 +1,128 @@
+//
+//  Gacha.proto
+//  JSON2Proto
+//
+//  Created by memz233 on 8/20/26.
+//
+
+syntax = "proto3";
+
+message _GachaList {
+    repeated _Gacha jp = 1;
+    repeated _Gacha en = 2;
+    repeated _Gacha tc = 3;
+    repeated _Gacha cn = 4;
+    repeated _Gacha kr = 5;
+}
+
+message _Gacha {
+    int32 id = 1;
+    _GachaType gacha_type = 2;
+    string name = 3;
+    int32 seq = 4;
+    string asset_bundle_name = 5;
+    int32 gacha_card_rarity_rate_group_id = 6;
+    int64 start_at = 7;
+    int64 end_at = 8;
+    bool is_show_period = 9;
+    int32 gacha_ceil_item_id = 10;
+    int32 wish_select_count = 11;
+    int32 wish_fixed_select_count = 12;
+    int32 wish_limited_select_count = 13;
+    bool is_select_character = 14;
+    repeated _GachaCardRarityRate gacha_card_rarity_rates = 15;
+    repeated _GachaDetail gacha_details = 16;
+    repeated _GachaBehavior gacha_behaviors = 17;
+    repeated _GachaPickup gacha_pickups = 18;
+    _GachaInformation gacha_information = 19;
+}
+
+enum _GachaType {
+    GACHA_TYPE_UNSPECIFIED = 0;
+    GACHA_TYPE_NORMAL = 1;
+    GACHA_TYPE_CEIL = 2;
+    GACHA_TYPE_GIFT = 3;
+    GACHA_TYPE_BEGINNER = 4;
+}
+enum _CardRarityType {
+    CARD_RARITY_TYPE_UNSPECIFIED = 0;
+    CARD_RARITY_TYPE_RARITY2 = 1;
+    CARD_RARITY_TYPE_RARITY3 = 2;
+    CARD_RARITY_TYPE_RARITY4 = 3;
+    CARD_RARITY_TYPE_RARITY_BIRTHDAY = 4;
+}
+enum _LotteryType {
+    LOTTERY_TYPE_UNSPECIFIED = 0;
+    LOTTERY_TYPE_NORMAL = 1;
+    LOTTERY_TYPE_CATEGORIZED_WISH = 2;
+    LOTTERY_TYPE_RATE_CHOICE_FIRST = 3;
+    LOTTERY_TYPE_RATE_CHOICE_SECOND = 4;
+}
+enum _GachaBehaviorType {
+    GACHA_BEHAVIOR_TYPE_UNSPECIFIED = 0;
+    GACHA_BEHAVIOR_TYPE_NORMAL = 1;
+    GACHA_BEHAVIOR_TYPE_ONCE_A_DAY = 2;
+    GACHA_BEHAVIOR_TYPE_ONCE_A_WEEK = 3;
+    GACHA_BEHAVIOR_TYPE_OVER_RARITY_3_ONCE = 4;
+    GACHA_BEHAVIOR_TYPE_OVER_RARITY_4_ONCE = 5;
+}
+enum _CostResourceType {
+    COST_RESOURCE_TYPE_UNSPECIFIED = 0;
+    COST_RESOURCE_TYPE_JEWEL = 1;
+    COST_RESOURCE_TYPE_PAID_JEWEL = 2;
+    COST_RESOURCE_TYPE_GACHA_TICKET = 3;
+}
+enum _GachaResourceCategory {
+    GACHA_RESOURCE_CATEGORY_UNSPECIFIED = 0;
+    GACHA_RESOURCE_CATEGORY_FREE_RESOURCE = 1;
+    GACHA_RESOURCE_CATEGORY_CONSUME_RESOURCE = 2;
+}
+enum _GachaSpinnableType {
+    GACHA_SPINNABLE_TYPE_UNSPECIFIED = 0;
+    GACHA_SPINNABLE_TYPE_ANY = 1;
+    GACHA_SPINNABLE_TYPE_COLORFUL_PASS = 2;
+}
+enum _GachaPickupType {
+    GACHA_PICKUP_TYPE_UNSPECIFIED = 0;
+    GACHA_PICKUP_TYPE_NORMAL = 1;
+}
+
+message _GachaCardRarityRate {
+    int32 id = 1;
+    int32 group_id = 2;
+    _CardRarityType card_rarity_type = 3;
+    _LotteryType lottery_type = 4;
+    float rate = 5;
+}
+message _GachaDetail {
+    int32 id = 1;
+    int32 gacha_id = 2;
+    int32 card_id = 3;
+    int32 weight = 4;
+    bool is_wish = 5;
+}
+message _GachaBehavior {
+    int32 id = 1;
+    int32 gacha_id = 2;
+    _GachaBehaviorType gacha_behavior_type = 3;
+    _CostResourceType cost_resource_type = 4;
+    int32 cost_resource_id = 5;
+    int32 cost_resource_quantity = 6;
+    int32 spin_count = 7;
+    int32 execute_limit = 8;
+    int32 group_id = 9;
+    int32 priority = 10;
+    _GachaResourceCategory resource_category = 11;
+    _GachaSpinnableType gacha_spinnable_type = 12;
+}
+message _GachaPickup {
+    int32 id = 1;
+    int32 gacha_id = 2;
+    int32 card_id = 3;
+    _GachaPickupType gacha_pickup_type = 4;
+}
+message _GachaInformation {
+    int32 gacha_id = 1;
+    string summary = 2;
+    string description = 3;
+}
