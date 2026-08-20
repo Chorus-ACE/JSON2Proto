@@ -61,6 +61,11 @@
 			path = SekaiProtoDef;
 			sourceTree = "<group>";
 		};
+		8C728F7830373C5700FBA998 /* .github */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = .github;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +83,7 @@
 		8C728ECF30370FD000FBA998 = {
 			isa = PBXGroup;
 			children = (
+				8C728F7830373C5700FBA998 /* .github */,
 				8C728EE83037107300FBA998 /* SekaiProtoDef */,
 				8C728EE330370FDB00FBA998 /* JSON2Proto */,
 				8C728ED930370FD000FBA998 /* Products */,
