@@ -15,7 +15,7 @@ jobs:
       - name: Create output folder
         run: mkdir output
       - name: Run JSON2Proto
-        run: ./build/JSON2Proto output/
+        run: ./build/Build/Products/Release/JSON2Proto output/
       - name: Compress results
         run: |
           aa archive -i output/gacha.proto -o output/gacha.aar
