@@ -29,5 +29,7 @@ jobs:
           git config --global user.email "memz1@darock.top"
           git config --global user.name "WindowsMEMZ"
           git remote add origin https://${EXTERNAL_PAT}@github.com/Chorus-ACE/Sekai-Protobuf-Assets.git
+          git add .
           git commit -m 'Update Assets'
-          git push origin main --force
+          git branch -M main
+          git push -u origin main --force
