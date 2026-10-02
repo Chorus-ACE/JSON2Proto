@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A7B240000000000000000001 /* ContentConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B240000000000000000002 /* ContentConversion.swift */; };
 		8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */; };
 		8C728EE73037101A00FBA998 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728EE63037101A00FBA998 /* ArgumentParser */; };
 		8C728F4E30371FF800FBA998 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728F4D30371FF800FBA998 /* SwiftProtobuf */; };
@@ -26,6 +27,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A7B240000000000000000002 /* ContentConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentConversion.swift; sourceTree = "<group>"; };
 		8C728ED830370FD000FBA998 /* JSON2Proto */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = JSON2Proto; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandLineEntry.swift; sourceTree = "<group>"; };
 		8C728F5B303721F900FBA998 /* WorkList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkList.swift; sourceTree = "<group>"; };
@@ -36,6 +38,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Gacha.proto,
+				Character.proto,
+				Event.proto,
+				Card.proto,
 			);
 			target = 8C728ED730370FD000FBA998 /* JSON2Proto */;
 		};
@@ -102,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */,
+				A7B240000000000000000002 /* ContentConversion.swift */,
 				8C728F5B303721F900FBA998 /* WorkList.swift */,
 			);
 			path = JSON2Proto;
@@ -178,6 +184,7 @@
 			files = (
 				8C728F5D303721FD00FBA998 /* WorkList.swift in Sources */,
 				8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */,
+				A7B240000000000000000001 /* ContentConversion.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */

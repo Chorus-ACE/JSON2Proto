@@ -3,6 +3,9 @@
         {
             "protoFiles": [
                 "Gacha.proto",
+                "Character.proto",
+                "Event.proto",
+                "Card.proto"
             ],
             "visibility": "internal"
         }

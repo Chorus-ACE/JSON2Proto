@@ -8,6 +8,8 @@ jobs:
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@v5.0.0
+      - name: Test conversions
+        run: swift test
       - name: Create build folder
         run: mkdir build
       - name: Build
@@ -18,8 +20,11 @@ jobs:
         run: ./build/Build/Products/Release/JSON2Proto output/
       - name: Compress results
         run: |
-          aa archive -i output/gacha.proto -o output/gacha.aar
-          rm -f output/*.proto
+          for name in gacha character event card; do
+            test -s "output/$name.proto"
+            aa archive -i "output/$name.proto" -o "output/$name.aar"
+          done
+          # Keep raw Protobuf files for SekaiKit and archives for existing clients.
       - name: Commit results
         env:
           EXTERNAL_PAT: ${{ secrets.MEMZ_REPO_PAT }}

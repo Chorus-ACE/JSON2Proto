@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+// Wire field numbers are stable. tc is SekaiKit's tw locale.
+message _CharacterList {
+    repeated _Character jp = 1;
+    repeated _Character en = 2;
+    repeated _Character tc = 3;
+    repeated _Character cn = 4;
+    repeated _Character kr = 5;
+}
+
+// Joined from gameCharacters, characterProfiles and gameCharacterUnits by ID.
+message _Character {
+    int32 id = 1;
+    int32 resource_id = 2;
+    optional string family_name = 3 [json_name = "firstName"];
+    optional string given_name = 4;
+    optional string family_name_ruby = 5 [json_name = "firstNameRuby"];
+    optional string given_name_ruby = 6;
+    optional string family_name_english = 7 [json_name = "firstNameEnglish"];
+    string given_name_english = 8;
+    string gender = 9;
+    double height = 10;
+    optional string character_voice = 11;
+    optional string birthday = 12;
+    optional string school = 13;
+    optional string school_class = 14 [json_name = "schoolYear"];
+    optional string hobby = 15;
+    optional string special_skill = 16;
+    optional string favorite_food = 17;
+    optional string disliked_food = 18 [json_name = "hatedFood"];
+    optional string weakness = 19 [json_name = "weak"];
+    optional string introduction = 20;
+    string introduction_story_id = 21 [json_name = "scenarioId"];
+    float live2d_height_adjustment = 22 [json_name = "live2dHeightAdjustment"];
+    string figure = 23;
+    string breast_size = 24;
+    string unit = 25;
+    string support_unit_type = 26;
+    repeated _CharacterColors color_info = 27;
+}
+
+message _CharacterColors {
+    int32 id = 1;
+    string unit = 2;
+    string main_color = 3 [json_name = "colorCode"];
+    string skin_color = 4 [json_name = "skinColorCode"];
+    string skin_shadow_color1 = 5 [json_name = "skinShadowColorCode1"];
+    string skin_shadow_color2 = 6 [json_name = "skinShadowColorCode2"];
+}

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+message _CardList {
+    repeated _Card jp = 1;
+    repeated _Card en = 2;
+    repeated _Card tc = 3;
+    repeated _Card cn = 4;
+    repeated _Card kr = 5;
+}
+
+// Strings retain upstream enum values, including values added in the future.
+// Optional scalars distinguish missing values from empty strings and zero.
+// All timestamps are milliseconds since the Unix epoch.
+message _Card {
+    int32 id = 1;
+    optional string name = 2 [json_name = "prefix"];
+    int32 character_id = 3;
+    optional string support_unit = 4;
+    string rarity = 5 [json_name = "cardRarityType"];
+    string attribute = 6 [json_name = "attr"];
+    optional int64 release_at = 7;
+    int32 source_type = 8 [json_name = "cardSupplyId"];
+    optional string gacha_phrase = 9;
+    string initial_special_training_status = 10;
+    int32 skill_id = 11;
+    optional string skill_name = 12 [json_name = "cardSkillName"];
+    optional int32 special_training_skill_id = 13;
+    optional string special_training_skill_name = 14;
+    repeated _CardParameter card_parameters = 15;
+    int32 special_training_power1_bonus_fixed = 16;
+    int32 special_training_power2_bonus_fixed = 17;
+    int32 special_training_power3_bonus_fixed = 18;
+    optional int32 special_training_reward_resource_box_id = 19;
+    string archive_display_type = 20;
+    optional int64 archive_published_at = 21;
+    string assetbundle_name = 22;
+}
+
+message _CardParameter {
+    string type = 1 [json_name = "cardParameterType"];
+    int32 level = 2 [json_name = "cardLevel"];
+    int32 power = 3;
+}

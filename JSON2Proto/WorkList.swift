@@ -9,30 +9,18 @@ import Foundation
 import SwiftyJSON
 import SwiftProtobuf
 
-func convertGachaList(to url: URL) async throws {
-    var gachaList = _GachaList()
-    
-    let (jpData, _) = try await URLSession.shared.data(from: URL(string: "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-diff/refs/heads/main/gachas.json")!)
-    let (enData, _) = try await URLSession.shared.data(from: URL(string: "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-en-diff/refs/heads/main/gachas.json")!)
-    let (tcData, _) = try await URLSession.shared.data(from: URL(string: "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-tc-diff/refs/heads/main/gachas.json")!)
-    let (cnData, _) = try await URLSession.shared.data(from: URL(string: "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-cn-diff/refs/heads/main/gachas.json")!)
-    let (krData, _) = try await URLSession.shared.data(from: URL(string: "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-kr-diff/refs/heads/main/gachas.json")!)
-    
-    gachaList.jp = try convertGachaArray(data: jpData)
-    gachaList.en = try convertGachaArray(data: enData)
-    gachaList.tc = try convertGachaArray(data: tcData)
-    gachaList.cn = try convertGachaArray(data: cnData)
-    gachaList.kr = try convertGachaArray(data: krData)
-    
-    try gachaList.serializedData().write(to: url)
+func convertGachaList(to url: URL, source: MasterDataSource) async throws {
+    try await writeList(_GachaList.self, to: url) { locale in
+        try await convertGachaArray(data: source.data("gachas", locale: locale))
+    }
 }
 
 func convertGachaArray(data: Data) throws -> [_Gacha] {
-    let json = try JSON(data: data)
+    let json = try jsonRows(data, table: "gachas")
     
     var result: [_Gacha] = []
     result.reserveCapacity(json.count)
-    for (_, gachaJSON) in json {
+    for gachaJSON in json {
         var gacha = _Gacha()
         gacha.id = gachaJSON["id"].int32Value
         switch gachaJSON["gachaType"].stringValue {

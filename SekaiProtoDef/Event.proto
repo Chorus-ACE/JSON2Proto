@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+message _EventList {
+    repeated _Event jp = 1;
+    repeated _Event en = 2;
+    repeated _Event tc = 3;
+    repeated _Event cn = 4;
+    repeated _Event kr = 5;
+}
+
+// Includes deck bonuses and event card/music associations.
+// All timestamps are milliseconds since the Unix epoch.
+message _Event {
+    int32 id = 1;
+    optional string title = 2 [json_name = "name"];
+    string event_type = 3;
+    optional int64 displaying_start_at = 4 [json_name = "eventOnlyComponentDisplayStartAt"];
+    optional int64 start_at = 5;
+    optional int64 aggregate_at = 6;
+    optional int64 ranking_announce_at = 7;
+    optional int64 distribution_start_at = 8;
+    optional int64 displaying_end_at = 9 [json_name = "eventOnlyComponentDisplayEndAt"];
+    optional int64 closed_at = 10;
+    optional int64 distribution_end_at = 11;
+    optional string unit = 12;
+    optional string attribute = 13;
+    repeated int32 characters = 14;
+    optional int32 attribute_bonus = 15;
+    int32 character_bonus = 16;
+    int32 virtual_live_id = 17;
+    bool is_count_leader_character_play = 18;
+    repeated _EventRankingRewardRange event_ranking_reward_ranges = 19;
+    string assetbundle_name = 20;
+    string bgm_assetbundle_name = 21;
+    repeated int32 card_ids = 22;
+    repeated int32 music_ids = 23;
+}
+
+message _EventRankingRewardRange {
+    int32 upper_bound = 1 [json_name = "fromRank"];
+    int32 lower_bound = 2 [json_name = "toRank"];
+    bool include_lower_bound = 3 [json_name = "isToRankBorder"];
+    repeated _EventRankingReward event_ranking_rewards = 4;
+}
+
+message _EventRankingReward {
+    int32 resource_box_id = 1;
+    optional string reward_condition_type = 2;
+}
