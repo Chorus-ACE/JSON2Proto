@@ -51,3 +51,5 @@ To test a conversion through SekaiKit:
 ```sh
 SEKAI_PROTOBUF_TEST_ASSETS="$PWD/output" swift test --package-path ../SekaiKit
 ```
+
+Note: This lovely README.md is purely vibe-coded.
