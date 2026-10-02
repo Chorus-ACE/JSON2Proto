@@ -74,7 +74,7 @@ jobs:
           git config user.email "sakiko@darock.top"
           git config user.name "Sakiko Togawa"
           git commit -m 'Update Assets'
-          git push origin HEAD:main
+          git push origin HEAD:main --force
       # Record success even when upstream changes produce identical Protobuf.
       # This runs only after conversion and any required push have succeeded.
       - name: Record successful check
