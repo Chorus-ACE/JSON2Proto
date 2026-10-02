@@ -3,42 +3,86 @@ name: Update Assets
 on:
   push:
   workflow_dispatch:
+    inputs:
+      force:
+        description: Regenerate even if source files are unchanged
+        type: boolean
+        default: false
   schedule:
-   - cron: '0 * * * *'
-  
+    - cron: '0 * * * *'
+
+permissions:
+  contents: read
+
+# Serialize scheduled, push and manual runs so publications cannot overlap.
+concurrency:
+  group: update-assets
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@v5.0.0
-      - name: Test conversions
-        run: swift test
-      - name: Create build folder
-        run: mkdir build
-      - name: Build
-        run: xcodebuild -project JSON2Proto.xcodeproj -scheme JSON2Proto -configuration Release -derivedDataPath ./build -destination "generic/platform=macOS" -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_STYLE=Manual DEVELOPMENT_TEAM=""
-      - name: Create output folder
-        run: mkdir output
-      - name: Run JSON2Proto
-        run: ./build/Build/Products/Release/JSON2Proto output/
-      - name: Compress results
-        run: |
-          for name in gacha character event card; do
-            test -s "output/$name.proto"
-            aa archive -i "output/$name.proto" -o "output/$name.aar"
-          done
-          # Keep raw Protobuf files for SekaiKit and archives for existing clients.
-      - name: Commit results
+      - name: Test update checks
+        run: python3 -m unittest discover -s Scripts/tests -v
+      - name: Check out published assets
+        uses: actions/checkout@v5.0.0
+        with:
+          repository: Chorus-ACE/Sekai-Protobuf-Assets
+          ref: main
+          token: ${{ secrets.MEMZ_REPO_PAT }}
+          path: published
+      - name: Restore last successful check
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: .asset-update-state
+          key: asset-update-state-v2-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: asset-update-state-v2-${{ runner.os }}-
+      - name: Check source files
+        id: sources
         env:
-          EXTERNAL_PAT: ${{ secrets.MEMZ_REPO_PAT }}
+          GH_TOKEN: ${{ github.token }}
+          FORCE_UPDATE: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
+        run: python3 Scripts/update_assets.py check --state .asset-update-state/state.json --snapshot source-snapshot.json --published published
+      - name: Download checked source snapshot
+        if: steps.sources.outputs.changed == 'true'
+        run: python3 Scripts/update_assets.py download --snapshot source-snapshot.json --input master-data
+      - name: Test conversions
+        if: steps.sources.outputs.changed == 'true'
+        run: swift test
+      - name: Build
+        if: steps.sources.outputs.changed == 'true'
+        run: xcodebuild -project JSON2Proto.xcodeproj -scheme JSON2Proto -configuration Release -derivedDataPath ./build -destination "generic/platform=macOS" -skipPackagePluginValidation build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_STYLE=Manual DEVELOPMENT_TEAM=""
+      - name: Run JSON2Proto
+        if: steps.sources.outputs.changed == 'true'
+        run: ./build/Build/Products/Release/JSON2Proto output/ --input-folder master-data
+      - name: Compare Protobuf and compress changed assets
+        if: steps.sources.outputs.changed == 'true'
+        id: assets
+        run: python3 Scripts/update_assets.py prepare --generated output --published published --state .asset-update-state/state.json
+      - name: Commit and push changed assets
+        if: steps.assets.outputs.changed == 'true'
+        working-directory: published
         run: |
-          cd output
-          git init
-          git config --global user.email "sakiko@darock.top"
-          git config --global user.name "Sakiko Togawa"
-          git remote add origin https://${EXTERNAL_PAT}@github.com/Chorus-ACE/Sekai-Protobuf-Assets.git
-          git add .
+          # Includes deletion of legacy raw .proto files from the clean checkout.
+          git add --all -- .
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.email "sakiko@darock.top"
+          git config user.name "Sakiko Togawa"
           git commit -m 'Update Assets'
-          git branch -M main
-          git push -u origin main --force
+          git push origin HEAD:main
+      # Record success even when upstream changes produce identical Protobuf.
+      # This runs only after conversion and any required push have succeeded.
+      - name: Record successful check
+        if: steps.sources.outputs.changed == 'true'
+        run: python3 Scripts/update_assets.py record --snapshot source-snapshot.json --state .asset-update-state/state.json --published published --generated output
+      - name: Save successful check
+        if: steps.sources.outputs.changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .asset-update-state
+          key: ${{ steps.state.outputs.cache-primary-key }}

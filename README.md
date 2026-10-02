@@ -22,10 +22,38 @@ folder must contain `jp/`, `en/`, `tc/`, `cn/`, and `kr/`, each containing all o
 the source tables above. A failed download, invalid table, duplicate entity ID,
 or missing character join fails conversion instead of publishing partial data.
 
-The Update Assets workflow runs tests, builds, converts, and publishes all four
-binary `.proto` files alongside `.aar` archives to
-`Chorus-ACE/Sekai-Protobuf-Assets`. The output `.proto` files are binary data;
-the files in `SekaiProtoDef/` are schema definitions.
+The Update Assets workflow runs tests, builds, converts, and publishes only
+`gacha.aar`, `character.aar`, `event.aar`, and `card.aar` to
+`Chorus-ACE/Sekai-Protobuf-Assets`. Each Apple Archive contains its corresponding
+binary `.proto` file. The raw `.proto` outputs remain local build intermediates;
+legacy raw binaries are removed from the destination on the next successful run.
+The files in `SekaiProtoDef/` are schema definitions.
+
+The workflow checks every hour, on pushes, and on manual runs. Before building,
+it compares the Git blob SHAs of the 45 source JSON files (9 tables × 5 regions)
+against the last successful run stored in GitHub Actions cache. Unrelated upstream
+commits are ignored. A changed converter repository revision, missing cache, or
+missing/changed published files also triggers conversion. Manual runs have a
+`force` option to bypass this check.
+
+Downloads use the checked commit for each region and verify every Git blob SHA.
+After conversion, only changed Protobuf contents are recompressed; unchanged
+archives are retained so archive timestamps do not create false changes. Cached
+content hashes are bound to archive hashes; when the cache is missing, existing
+archives are extracted locally for comparison. Commits
+and normal pushes happen only when published assets change. Runs are serialized.
+The existing asset history is preserved.
+
+Successful source checks are cached even when new JSON produces identical Protobuf,
+so the next hourly run can skip conversion. Failed downloads, builds, conversions,
+or pushes never advance the successful state. If the Actions cache expires, the
+workflow converts once again and still avoids publishing identical output.
+
+Run the update-check regression tests with:
+
+```sh
+python3 -m unittest discover -s Scripts/tests -v
+```
 
 Character profiles and colors are joined by character ID. Event bonuses are
 consolidated with virtual singer variants mapped to their base characters.
@@ -49,7 +77,9 @@ Publish the updated assets before releasing a SekaiKit version that reads them.
 To test a conversion through SekaiKit:
 
 ```sh
-SEKAI_PROTOBUF_TEST_ASSETS="$PWD/output" swift test --package-path ../SekaiKit
+mkdir -p archives
+python3 Scripts/update_assets.py prepare --generated output --published archives
+SEKAI_PROTOBUF_TEST_ASSETS="$PWD/archives" swift test --package-path ../SekaiKit
 ```
 
 Note: This lovely README.md is purely vibe-coded.

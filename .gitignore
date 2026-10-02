@@ -28,3 +28,9 @@ Dependencies/
 .netrc
 secrets/
 
+# Local runs of the asset update workflow
+.asset-update-state/
+source-snapshot.json
+master-data/
+published/
+output/
