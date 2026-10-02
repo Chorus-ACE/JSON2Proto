@@ -35,8 +35,8 @@ jobs:
         run: |
           cd output
           git init
-          git config --global user.email "memz1@darock.top"
-          git config --global user.name "WindowsMEMZ"
+          git config --global user.email "sakiko@darock.top"
+          git config --global user.name "Sakiko Togawa"
           git remote add origin https://${EXTERNAL_PAT}@github.com/Chorus-ACE/Sekai-Protobuf-Assets.git
           git add .
           git commit -m 'Update Assets'
