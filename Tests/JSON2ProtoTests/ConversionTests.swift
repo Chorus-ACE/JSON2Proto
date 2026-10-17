@@ -6,6 +6,86 @@ import SwiftProtobuf
 final class ConversionTests: XCTestCase {
     private func data(_ string: String) -> Data { Data(string.utf8) }
 
+    func testGachaMetadataCategoriesAndOptionalLimits() throws {
+        let rows = try convertGachaArray(data: data(#"[{"id":1,"gachaType":"subeginner","gachaInformation":{"summary":"Summary","description":"Rules"},"gachaBehaviors":[{"id":1,"executeLimit":0},{"id":2}]},{"id":2,"gachaType":"sureturn"},{"id":3,"gachaType":"sunormal"},{"id":4,"gachaType":"return"},{"id":5,"gachaType":"future_type"}]"#))
+        let first = try _Gacha(serializedBytes: rows[0].serializedData())
+        XCTAssertEqual(first.gachaInformation.gachaID, 1)
+        XCTAssertEqual(first.gachaInformation.summary, "Summary")
+        XCTAssertEqual(first.gachaInformation.description_p, "Rules")
+        XCTAssertTrue(first.gachaBehaviors[0].hasExecuteLimit)
+        XCTAssertEqual(first.gachaBehaviors[0].executeLimit, 0)
+        XCTAssertFalse(first.gachaBehaviors[1].hasExecuteLimit)
+        XCTAssertEqual(rows.prefix(4).map(\.gachaType), [.specialBeginner, .specialReturn, .specialNormal, .returning])
+        XCTAssertEqual(rows[4].gachaTypeName, "future_type")
+        XCTAssertThrowsError(try convertGachaArray(data: data(#"[{"id":1},{"id":1}]"#)))
+        XCTAssertThrowsError(try convertGachaArray(data: data(#"[{"name":"Missing ID"}]"#)))
+    }
+
+    // Deliberately shuffled; banner unit IDs must be joined, not treated as character IDs.
+    private var focusEvents: Data {
+        data(#"[{"id":150,"unit":"school_refusal","startAt":500},{"id":127,"unit":"school_refusal","startAt":400},{"id":14,"unit":"none","startAt":100},{"id":53,"unit":"school_refusal","startAt":200},{"id":77,"unit":"school_refusal","startAt":300},{"id":22,"unit":"none","startAt":150},{"id":112,"unit":"school_refusal","eventType":"world_bloom","startAt":350},{"id":1,"unit":"none","startAt":50}]"#)
+    }
+    private var focusStories: Data {
+        data(#"[{"eventId":150,"bannerGameCharacterUnitId":119},{"eventId":127,"bannerGameCharacterUnitId":119},{"eventId":14,"bannerGameCharacterUnitId":119},{"eventId":53,"bannerGameCharacterUnitId":119},{"eventId":77,"bannerGameCharacterUnitId":119},{"eventId":22,"bannerGameCharacterUnitId":119},{"eventId":112,"bannerGameCharacterUnitId":119},{"eventId":1,"bannerGameCharacterUnitId":2}]"#)
+    }
+    private var focusUnits: Data {
+        data(#"[{"id":119,"gameCharacterId":19,"unit":"school_refusal"},{"id":2,"gameCharacterId":2,"unit":"light_sound"}]"#)
+    }
+
+    func testFocusCountsExcludeMixedAndWorldLinkEvents() throws {
+        let focus = try calculateEventFocus(events: focusEvents, stories: focusStories, units: focusUnits)
+        XCTAssertEqual([14, 53, 77, 127, 150].map { focus[$0]?.index }, [1, 2, 3, 4, 5])
+        XCTAssertEqual(focus[150]?.characterID, 19)
+        XCTAssertEqual(focus[1]?.characterID, 2)
+        XCTAssertEqual(focus[1]?.index, 1)
+        XCTAssertNil(focus[22])
+        XCTAssertNil(focus[112])
+        let chronological = try calculateEventFocus(
+            events: data(#"[{"id":60,"unit":"school_refusal","startAt":1},{"id":50,"unit":"school_refusal","startAt":2}]"#),
+            stories: data(#"[{"eventId":60,"bannerGameCharacterUnitId":119},{"eventId":50,"bannerGameCharacterUnitId":119}]"#),
+            units: focusUnits
+        )
+        XCTAssertEqual(chronological[60]?.index, 1)
+        XCTAssertEqual(chronological[50]?.index, 2)
+    }
+
+    func testIncompleteFocusDataFailsInsteadOfUndercounting() {
+        XCTAssertThrowsError(try calculateEventFocus(events: focusEvents, stories: data("[]"), units: focusUnits))
+        XCTAssertThrowsError(try calculateEventFocus(events: focusEvents, stories: focusStories, units: data("[]")))
+        XCTAssertThrowsError(try calculateEventFocus(
+            events: data(#"[{"id":53,"unit":"school_refusal","startAt":1}]"#),
+            stories: data(#"[{"eventId":53,"bannerGameCharacterUnitId":2}]"#), units: focusUnits
+        ))
+    }
+
+    func testRegionalFocusUsesFullJapaneseHistory() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        for locale in MasterLocale.allCases {
+            let folder = directory.appending(path: locale.rawValue)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            // Other regions have only the fifth event and use different dates.
+            try (locale == .jp ? focusEvents : data(#"[{"id":150,"unit":"school_refusal","startAt":1},{"id":22,"unit":"none"}]"#))
+                .write(to: folder.appending(path: "events.json"))
+            for table in ["eventDeckBonuses", "eventCards", "eventMusics"] {
+                try data("[]").write(to: folder.appending(path: "\(table).json"))
+            }
+        }
+        try focusStories.write(to: directory.appending(path: "jp/eventStories.json"))
+        try focusUnits.write(to: directory.appending(path: "jp/gameCharacterUnits.json"))
+        let output = directory.appending(path: "event.proto")
+        try await convertEventList(to: output, source: MasterDataSource(inputFolder: directory))
+        let list = try _EventList(serializedBytes: Data(contentsOf: output))
+        for region in [list.jp, list.en, list.tc, list.cn, list.kr] {
+            let event = try XCTUnwrap(region.first { $0.id == 150 })
+            XCTAssertEqual(event.focusCharacterID, 19)
+            XCTAssertEqual(event.focusCharacterIndex, 5)
+            let mixed = try XCTUnwrap(region.first { $0.id == 22 })
+            XCTAssertFalse(mixed.hasFocusCharacterID)
+            XCTAssertFalse(mixed.hasFocusCharacterIndex)
+        }
+    }
+
     func testCharacterJoinUsesIDsAndPreservesMissingNames() throws {
         let characters = try convertCharacterArray(
             profiles: data(#"[{"characterId":2,"birthday":"8月31日","height":"158cm","school":""},{"characterId":1}]"#),
@@ -49,6 +129,36 @@ final class ConversionTests: XCTestCase {
         XCTAssertEqual(decoded.eventRankingRewardRanges.first?.lowerBound, 100)
         XCTAssertFalse(decoded.eventRankingRewardRanges[0].eventRankingRewards[0].hasRewardConditionType)
         XCTAssertFalse(events[1].hasAttributeBonus)
+    }
+
+    func testHistoricalEventUnitsAndPatchBoundary() throws {
+        let events = try convertEventArray(
+            events: data(#"[{"id":1,"unit":"none"},{"id":14},{"id":8,"unit":"none"},{"id":37,"unit":"street"},{"id":41,"unit":"none"},{"id":42,"unit":"none"},{"id":43,"unit":"idol"},{"id":44},{"id":45,"unit":"none"}]"#),
+            bonuses: data("[]"), cards: data("[]"), musics: data("[]")
+        )
+        let decoded = try events.map { try _Event(serializedBytes: $0.serializedData()) }
+        XCTAssertEqual(decoded.map(\.unit), [
+            "light_sound", "school_refusal", "theme_park", "street",
+            "none", "none", "idol", "", "none"
+        ])
+        XCTAssertTrue(decoded[1].hasUnit)
+        XCTAssertFalse(decoded[7].hasUnit)
+        XCTAssertEqual(Set(EarlyEventUnits.corrections.keys), Set(1...42))
+    }
+
+    func testHistoricalUnitsAreAppliedToAllRegions() async throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await writeList(_EventList.self, to: url) { _ in
+            try convertEventArray(
+                events: self.data(#"[{"id":1,"unit":"none"},{"id":14,"unit":"none"},{"id":4,"unit":"none"},{"id":43,"unit":"idol"}]"#),
+                bonuses: self.data("[]"), cards: self.data("[]"), musics: self.data("[]")
+            )
+        }
+        let list = try _EventList(serializedBytes: Data(contentsOf: url))
+        for region in [list.jp, list.en, list.tc, list.cn, list.kr] {
+            XCTAssertEqual(region.map(\.unit), ["light_sound", "school_refusal", "none", "idol"])
+        }
     }
 
     func testCardOptionalScalarsAndParametersRoundTrip() throws {

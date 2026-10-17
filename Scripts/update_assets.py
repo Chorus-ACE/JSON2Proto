@@ -15,7 +15,7 @@ import urllib.request
 
 TABLES = (
     "gachas", "characterProfiles", "gameCharacters", "gameCharacterUnits",
-    "events", "eventDeckBonuses", "eventCards", "eventMusics", "cards",
+    "events", "eventDeckBonuses", "eventCards", "eventMusics", "cards", "eventStories",
 )
 REPOSITORIES = {
     locale: f"Sekai-World/sekai-master-db{suffix}-diff"

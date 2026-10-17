@@ -35,6 +35,8 @@ message _Gacha {
     repeated _GachaBehavior gacha_behaviors = 17;
     repeated _GachaPickup gacha_pickups = 18;
     _GachaInformation gacha_information = 19;
+    // Preserve new upstream categories even when the typed enum is unspecified.
+    optional string gacha_type_name = 20;
 }
 
 enum _GachaType {
@@ -43,6 +45,10 @@ enum _GachaType {
     GACHA_TYPE_CEIL = 2;
     GACHA_TYPE_GIFT = 3;
     GACHA_TYPE_BEGINNER = 4;
+    GACHA_TYPE_SPECIAL_BEGINNER = 5;
+    GACHA_TYPE_SPECIAL_RETURN = 6;
+    GACHA_TYPE_SPECIAL_NORMAL = 7;
+    GACHA_TYPE_RETURNING = 8;
 }
 enum _CardRarityType {
     CARD_RARITY_TYPE_UNSPECIFIED = 0;
@@ -109,7 +115,7 @@ message _GachaBehavior {
     int32 cost_resource_id = 5;
     int32 cost_resource_quantity = 6;
     int32 spin_count = 7;
-    int32 execute_limit = 8;
+    optional int32 execute_limit = 8;
     int32 group_id = 9;
     int32 priority = 10;
     _GachaResourceCategory resource_category = 11;

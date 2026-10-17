@@ -34,6 +34,8 @@ message _Event {
     string bgm_assetbundle_name = 21;
     repeated int32 card_ids = 22;
     repeated int32 music_ids = 23;
+    optional int32 focus_character_id = 24;
+    optional int32 focus_character_index = 25;
 }
 
 message _EventRankingRewardRange {

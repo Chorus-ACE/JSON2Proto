@@ -82,7 +82,7 @@ func jsonRows(_ data: Data, table: String) throws -> [JSON] {
     return rows
 }
 
-private func indexed(_ rows: [JSON], key: String, table: String) throws -> [Int: JSON] {
+func indexed(_ rows: [JSON], key: String, table: String) throws -> [Int: JSON] {
     var result: [Int: JSON] = [:]
     for row in rows {
         guard let id = row[key].int, id > 0 else { throw ConversionError.invalidID(table) }
@@ -141,7 +141,45 @@ func convertCardArray(data: Data) throws -> [_Card] {
     }
 }
 
-func convertEventArray(events: Data, bonuses: Data, cards: Data, musics: Data) throws -> [_Event] {
+struct EventFocus {
+    let characterID: Int32
+    let index: Int32
+}
+
+/// Compute once from JP data so regional release order and missing regional events
+/// cannot change a character's unit-focus event number.
+func calculateEventFocus(events: Data, stories: Data, units: Data) throws -> [Int: EventFocus] {
+    let rows = try jsonRows(events, table: "events")
+    _ = try indexed(rows, key: "id", table: "events")
+    let stories = try indexed(jsonRows(stories, table: "eventStories"), key: "eventId", table: "eventStories")
+    let units = try indexed(jsonRows(units, table: "gameCharacterUnits"), key: "id", table: "gameCharacterUnits")
+    let unitNames: Set<String> = ["light_sound", "idol", "street", "theme_park", "school_refusal", "piapro"]
+    var candidates: [(id: Int, start: Int64, character: Int32)] = []
+    for row in rows {
+        let id = row["id"].intValue
+        let unit = EarlyEventUnits.corrections[id] ?? row["unit"].stringValue
+        guard unitNames.contains(unit), row["eventType"].stringValue != "world_bloom" else { continue }
+        // Fail instead of silently skipping a unit event and shifting every later count.
+        guard let bannerID = stories[id]?["bannerGameCharacterUnitId"].int,
+              let characterUnit = units[bannerID],
+              characterUnit["unit"].string == unit,
+              let characterID = characterUnit["gameCharacterId"].int32, characterID > 0,
+              let start = row["startAt"].int64 else {
+            throw ConversionError.invalidRecord("event focus", id, "Missing or inconsistent banner character, unit, or startAt")
+        }
+        candidates.append((id, start, characterID))
+    }
+    candidates.sort { $0.start == $1.start ? $0.id < $1.id : $0.start < $1.start }
+    var counts: [Int32: Int32] = [:]
+    var result: [Int: EventFocus] = [:]
+    for event in candidates {
+        counts[event.character, default: 0] += 1
+        result[event.id] = EventFocus(characterID: event.character, index: counts[event.character]!)
+    }
+    return result
+}
+
+func convertEventArray(events: Data, bonuses: Data, cards: Data, musics: Data, focus: [Int: EventFocus] = [:]) throws -> [_Event] {
     let rows = try jsonRows(events, table: "events")
     _ = try indexed(rows, key: "id", table: "events")
     let bonuses = try Dictionary(grouping: jsonRows(bonuses, table: "eventDeckBonuses")) { $0["eventId"].intValue }
@@ -150,6 +188,15 @@ func convertEventArray(events: Data, bonuses: Data, cards: Data, musics: Data) t
     return try rows.map { row in
         var event = try decode(row, as: _Event.self)
         let id = Int(event.id)
+        if let unit = EarlyEventUnits.corrections[id] {
+            event.unit = unit
+        }
+        event.clearFocusCharacterID()
+        event.clearFocusCharacterIndex()
+        if let focus = focus[id] {
+            event.focusCharacterID = focus.characterID
+            event.focusCharacterIndex = focus.index
+        }
         for bonus in bonuses[id] ?? [] {
             let character = bonus["gameCharacterUnitId"].int32
             let attribute = bonus["cardAttr"].string
@@ -179,12 +226,17 @@ func convertCharacterList(to url: URL, source: MasterDataSource) async throws {
 }
 
 func convertEventList(to url: URL, source: MasterDataSource) async throws {
+    async let jpEvents = source.data("events", locale: .jp)
+    async let stories = source.data("eventStories", locale: .jp)
+    async let units = source.data("gameCharacterUnits", locale: .jp)
+    let canonicalEvents = try await jpEvents
+    let focus = try await calculateEventFocus(events: canonicalEvents, stories: stories, units: units)
     try await writeList(_EventList.self, to: url) { locale in
-        async let events = source.data("events", locale: locale)
+        async let events = locale == .jp ? canonicalEvents : source.data("events", locale: locale)
         async let bonuses = source.data("eventDeckBonuses", locale: locale)
         async let cards = source.data("eventCards", locale: locale)
         async let musics = source.data("eventMusics", locale: locale)
-        return try await convertEventArray(events: events, bonuses: bonuses, cards: cards, musics: musics)
+        return try await convertEventArray(events: events, bonuses: bonuses, cards: cards, musics: musics, focus: focus)
     }
 }
 

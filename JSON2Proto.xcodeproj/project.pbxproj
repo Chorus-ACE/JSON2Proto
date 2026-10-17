@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A7B240000000000000000001 /* ContentConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B240000000000000000002 /* ContentConversion.swift */; };
+		A7B240000000000000000003 /* EarlyEventUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99B403230833285000DCEA9 /* EarlyEventUnits.swift */; };
 		8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */; };
 		8C728EE73037101A00FBA998 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728EE63037101A00FBA998 /* ArgumentParser */; };
 		8C728F4E30371FF800FBA998 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728F4D30371FF800FBA998 /* SwiftProtobuf */; };
 		8C728F5D303721FD00FBA998 /* WorkList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C728F5B303721F900FBA998 /* WorkList.swift */; };
 		8C728F693037263E00FBA998 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728F683037263E00FBA998 /* SwiftyJSON */; };
+		A7B240000000000000000001 /* ContentConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B240000000000000000002 /* ContentConversion.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,20 +28,21 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A7B240000000000000000002 /* ContentConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentConversion.swift; sourceTree = "<group>"; };
 		8C728ED830370FD000FBA998 /* JSON2Proto */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = JSON2Proto; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandLineEntry.swift; sourceTree = "<group>"; };
 		8C728F5B303721F900FBA998 /* WorkList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkList.swift; sourceTree = "<group>"; };
+		A7B240000000000000000002 /* ContentConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentConversion.swift; sourceTree = "<group>"; };
+		E99B403230833285000DCEA9 /* EarlyEventUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarlyEventUnits.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		8C728F543037200C00FBA998 /* Exceptions for "SekaiProtoDef" folder in "JSON2Proto" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Gacha.proto,
+				Card.proto,
 				Character.proto,
 				Event.proto,
-				Card.proto,
+				Gacha.proto,
 			);
 			target = 8C728ED730370FD000FBA998 /* JSON2Proto */;
 		};
@@ -108,6 +110,7 @@
 			children = (
 				8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */,
 				A7B240000000000000000002 /* ContentConversion.swift */,
+				E99B403230833285000DCEA9 /* EarlyEventUnits.swift */,
 				8C728F5B303721F900FBA998 /* WorkList.swift */,
 			);
 			path = JSON2Proto;
@@ -185,6 +188,7 @@
 				8C728F5D303721FD00FBA998 /* WorkList.swift in Sources */,
 				8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */,
 				A7B240000000000000000001 /* ContentConversion.swift in Sources */,
+				A7B240000000000000000003 /* EarlyEventUnits.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */

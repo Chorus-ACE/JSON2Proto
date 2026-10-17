@@ -17,12 +17,14 @@ func convertGachaList(to url: URL, source: MasterDataSource) async throws {
 
 func convertGachaArray(data: Data) throws -> [_Gacha] {
     let json = try jsonRows(data, table: "gachas")
+    _ = try indexed(json, key: "id", table: "gachas")
     
     var result: [_Gacha] = []
     result.reserveCapacity(json.count)
     for gachaJSON in json {
         var gacha = _Gacha()
         gacha.id = gachaJSON["id"].int32Value
+        if let type = gachaJSON["gachaType"].string { gacha.gachaTypeName = type }
         switch gachaJSON["gachaType"].stringValue {
         case "normal":
             gacha.gachaType = .normal
@@ -32,6 +34,14 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
             gacha.gachaType = .gift
         case "beginner":
             gacha.gachaType = .beginner
+        case "subeginner":
+            gacha.gachaType = .specialBeginner
+        case "sureturn":
+            gacha.gachaType = .specialReturn
+        case "sunormal":
+            gacha.gachaType = .specialNormal
+        case "return":
+            gacha.gachaType = .returning
         default: break
         }
         gacha.name = gachaJSON["name"].stringValue
@@ -113,6 +123,7 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
             result.costResourceID = $0.1["costResourceId"].int32Value
             result.costResourceQuantity = $0.1["costResourceQuantity"].int32Value
             result.spinCount = $0.1["spinCount"].int32Value
+            if let limit = $0.1["executeLimit"].int32 { result.executeLimit = limit }
             result.groupID = $0.1["groupId"].int32Value
             result.priority = $0.1["priority"].int32Value
             switch $0.1["resourceCategory"].stringValue {
@@ -144,8 +155,8 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
             return result
         }
         gacha.gachaInformation = .with {
-            $0.gachaID = gachaJSON["gachaInformation"]["gachaId"].int32Value
-            $0.summary = gachaJSON["gachaInformation"]["gachaId"].stringValue
+            $0.gachaID = gachaJSON["gachaInformation"]["gachaId"].int32 ?? gacha.id
+            $0.summary = gachaJSON["gachaInformation"]["summary"].stringValue
             $0.description_p = gachaJSON["gachaInformation"]["description"].stringValue
         }
         result.append(gacha)

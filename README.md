@@ -7,7 +7,7 @@ lists. Each file contains all five regions (`tc` corresponds to SekaiKit's `tw`)
 | --- | --- |
 | `gacha.proto` | `gachas.json` |
 | `character.proto` | `characterProfiles.json`, `gameCharacters.json`, `gameCharacterUnits.json` |
-| `event.proto` | `events.json`, `eventDeckBonuses.json`, `eventCards.json`, `eventMusics.json` |
+| `event.proto` | `events.json`, `eventDeckBonuses.json`, `eventCards.json`, `eventMusics.json`, JP `eventStories.json` and `gameCharacterUnits.json` |
 | `card.proto` | `cards.json` |
 
 Build with the JSON2Proto Xcode scheme, or use SwiftPM (Swift 6.2 or newer):
@@ -30,7 +30,7 @@ legacy raw binaries are removed from the destination on the next successful run.
 The files in `SekaiProtoDef/` are schema definitions.
 
 The workflow checks every hour, on pushes, and on manual runs. Before building,
-it compares the Git blob SHAs of the 45 source JSON files (9 tables × 5 regions)
+it compares the Git blob SHAs of the 50 source JSON files (10 tables × 5 regions)
 against the last successful run stored in GitHub Actions cache. Unrelated upstream
 commits are ignored. A changed converter repository revision, missing cache, or
 missing/changed published files also triggers conversion. Manual runs have a
@@ -59,6 +59,19 @@ Character profiles and colors are joined by character ID. Event bonuses are
 consolidated with virtual singer variants mapped to their base characters.
 Event card/music IDs are included for ExtendedEvent. Optional fields preserve
 presence, timestamps use milliseconds, and string enums retain upstream values.
+`JSON2Proto/EarlyEventUnits.swift` explicitly corrects the unit of events #1–42
+in every region, including `none` for mixed-unit events. This compiled data table
+repairs historical upstream `none` values without requiring runtime resource files.
+Events #43 onward retain their upstream unit. Regenerate and publish `event.aar`
+for these corrections to reach clients.
+The generator also joins JP story banner character-unit IDs to base character IDs
+and computes `focus_character_id` and the one-based `focus_character_index`.
+Counts use JP `startAt` order (event ID breaks ties), after historical unit
+corrections, and exclude mixed-unit and World Link events. The resulting metadata
+is shared by event ID across all regions, regardless of regional release order or
+progress. Incomplete or inconsistent focus data for a unit event fails conversion
+instead of silently shifting later counts. These fields are optional: old archives,
+mixed events, World Link, and events absent from JP history have no focus metadata.
 Card parameters accept both the expanded JP/EN records and the compact TC/CN/KR
 arrays, preserving the power at each level in the same wire format.
 
