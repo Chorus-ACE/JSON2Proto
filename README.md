@@ -7,7 +7,7 @@ lists. Each file contains all five regions (`tc` corresponds to SekaiKit's `tw`)
 | --- | --- |
 | `gacha.proto` | `gachas.json` |
 | `character.proto` | `characterProfiles.json`, `gameCharacters.json`, `gameCharacterUnits.json` |
-| `event.proto` | `events.json`, `eventDeckBonuses.json`, `eventCards.json`, `eventMusics.json`, JP `eventStories.json` and `gameCharacterUnits.json` |
+| `event.proto` | `events.json`, `eventDeckBonuses.json`, `eventCards.json`, `eventMusics.json`, `eventStories.json`, JP `gameCharacterUnits.json` |
 | `card.proto` | `cards.json` |
 
 Build with the JSON2Proto Xcode scheme, or use SwiftPM (Swift 6.2 or newer):
@@ -30,7 +30,7 @@ legacy raw binaries are removed from the destination on the next successful run.
 The files in `SekaiProtoDef/` are schema definitions.
 
 The workflow checks every hour, on pushes, and on manual runs. Before building,
-it compares the Git blob SHAs of the 50 source JSON files (10 tables × 5 regions)
+it compares the Git blob SHAs of the 55 source JSON files (11 tables × 5 regions)
 against the last successful run stored in GitHub Actions cache. Unrelated upstream
 commits are ignored. A changed converter repository revision, missing cache, or
 missing/changed published files also triggers conversion. Manual runs have a
@@ -57,6 +57,9 @@ python3 -m unittest discover -s Scripts/tests -v
 
 Character profiles and colors are joined by character ID. Event bonuses are
 consolidated with virtual singer variants mapped to their base characters.
+Event introductions (`outline`) are joined from each region’s `eventStories.json`
+by `eventId`; missing and empty introductions remain distinct. Old archives decode
+with no introduction. Regenerate and publish `event.aar` to deliver this field.
 Event card/music IDs are included for ExtendedEvent. Optional fields preserve
 presence, timestamps use milliseconds, and string enums retain upstream values.
 `JSON2Proto/EarlyEventUnits.swift` explicitly corrects the unit of events #1–42

@@ -179,15 +179,23 @@ func calculateEventFocus(events: Data, stories: Data, units: Data) throws -> [In
     return result
 }
 
-func convertEventArray(events: Data, bonuses: Data, cards: Data, musics: Data, focus: [Int: EventFocus] = [:]) throws -> [_Event] {
+func convertEventArray(events: Data, stories: Data, bonuses: Data, cards: Data, musics: Data, focus: [Int: EventFocus] = [:]) throws -> [_Event] {
     let rows = try jsonRows(events, table: "events")
     _ = try indexed(rows, key: "id", table: "events")
+    let stories = try indexed(jsonRows(stories, table: "eventStories"), key: "eventId", table: "eventStories")
     let bonuses = try Dictionary(grouping: jsonRows(bonuses, table: "eventDeckBonuses")) { $0["eventId"].intValue }
     let cards = try Dictionary(grouping: jsonRows(cards, table: "eventCards")) { $0["eventId"].intValue }
     let musics = try Dictionary(grouping: jsonRows(musics, table: "eventMusics")) { $0["eventId"].intValue }
     return try rows.map { row in
         var event = try decode(row, as: _Event.self)
         let id = Int(event.id)
+        event.clearOutline()
+        if let value = stories[id]?["outline"], value != .null {
+            guard let outline = value.string else {
+                throw ConversionError.invalidRecord("eventStories", id, "Invalid outline")
+            }
+            event.outline = outline
+        }
         if let unit = EarlyEventUnits.corrections[id] {
             event.unit = unit
         }
@@ -230,13 +238,15 @@ func convertEventList(to url: URL, source: MasterDataSource) async throws {
     async let stories = source.data("eventStories", locale: .jp)
     async let units = source.data("gameCharacterUnits", locale: .jp)
     let canonicalEvents = try await jpEvents
-    let focus = try await calculateEventFocus(events: canonicalEvents, stories: stories, units: units)
+    let canonicalStories = try await stories
+    let focus = try await calculateEventFocus(events: canonicalEvents, stories: canonicalStories, units: units)
     try await writeList(_EventList.self, to: url) { locale in
         async let events = locale == .jp ? canonicalEvents : source.data("events", locale: locale)
+        async let regionalStories = locale == .jp ? canonicalStories : source.data("eventStories", locale: locale)
         async let bonuses = source.data("eventDeckBonuses", locale: locale)
         async let cards = source.data("eventCards", locale: locale)
         async let musics = source.data("eventMusics", locale: locale)
-        return try await convertEventArray(events: events, bonuses: bonuses, cards: cards, musics: musics, focus: focus)
+        return try await convertEventArray(events: events, stories: regionalStories, bonuses: bonuses, cards: cards, musics: musics, focus: focus)
     }
 }
 

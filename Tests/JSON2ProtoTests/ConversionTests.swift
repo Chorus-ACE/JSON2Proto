@@ -71,13 +71,20 @@ final class ConversionTests: XCTestCase {
                 try data("[]").write(to: folder.appending(path: "\(table).json"))
             }
         }
-        try focusStories.write(to: directory.appending(path: "jp/eventStories.json"))
+        for locale in MasterLocale.allCases {
+            var stories = try JSONSerialization.jsonObject(with: focusStories) as! [[String: Any]]
+            for index in stories.indices {
+                stories[index]["outline"] = "Introduction in \(locale.rawValue)"
+            }
+            try JSONSerialization.data(withJSONObject: stories).write(to: directory.appending(path: "\(locale.rawValue)/eventStories.json"))
+        }
         try focusUnits.write(to: directory.appending(path: "jp/gameCharacterUnits.json"))
         let output = directory.appending(path: "event.proto")
         try await convertEventList(to: output, source: MasterDataSource(inputFolder: directory))
         let list = try _EventList(serializedBytes: Data(contentsOf: output))
-        for region in [list.jp, list.en, list.tc, list.cn, list.kr] {
+        for (locale, region) in zip(MasterLocale.allCases, [list.jp, list.en, list.tc, list.cn, list.kr]) {
             let event = try XCTUnwrap(region.first { $0.id == 150 })
+            XCTAssertEqual(event.outline, "Introduction in \(locale.rawValue)")
             XCTAssertEqual(event.focusCharacterID, 19)
             XCTAssertEqual(event.focusCharacterIndex, 5)
             let mixed = try XCTUnwrap(region.first { $0.id == 22 })
@@ -112,7 +119,7 @@ final class ConversionTests: XCTestCase {
     func testEventBonusesRewardsAndAssociations() throws {
         let events = try convertEventArray(
             events: data(#"[{"id":7,"name":"イベント","startAt":1700000000123,"assetbundleName":"event_a","bgmAssetbundleName":"bgm_a","eventRankingRewardRanges":[{"fromRank":1,"toRank":100,"isToRankBorder":true,"eventRankingRewards":[{"resourceBoxId":10}]}]},{"id":8}]"#),
-            bonuses: data(#"[{"eventId":7,"gameCharacterUnitId":27,"bonusRate":25},{"eventId":7,"gameCharacterUnitId":31,"bonusRate":25},{"eventId":7,"gameCharacterUnitId":32,"bonusRate":25},{"eventId":7,"cardAttr":"cool","bonusRate":50},{"eventId":7,"gameCharacterUnitId":1,"cardAttr":"cool","bonusRate":100}]"#),
+            stories: data("[]"), bonuses: data(#"[{"eventId":7,"gameCharacterUnitId":27,"bonusRate":25},{"eventId":7,"gameCharacterUnitId":31,"bonusRate":25},{"eventId":7,"gameCharacterUnitId":32,"bonusRate":25},{"eventId":7,"cardAttr":"cool","bonusRate":50},{"eventId":7,"gameCharacterUnitId":1,"cardAttr":"cool","bonusRate":100}]"#),
             cards: data(#"[{"eventId":7,"cardId":42},{"eventId":8,"cardId":43}]"#),
             musics: data(#"[{"eventId":7,"musicId":12}]"#)
         )
@@ -131,10 +138,30 @@ final class ConversionTests: XCTestCase {
         XCTAssertFalse(events[1].hasAttributeBonus)
     }
 
+    func testEventOutlineJoinsByIDAndPreservesPresence() throws {
+        let events = try convertEventArray(
+            events: data(#"[{"id":50},{"id":51},{"id":52},{"id":53},{"id":54}]"#),
+            stories: data(#"[{"eventId":51,"outline":""},{"eventId":50,"outline":"紹介\n二行目"},{"eventId":52},{"eventId":53,"outline":null}]"#),
+            bonuses: data("[]"), cards: data("[]"), musics: data("[]")
+        )
+        let decoded = try events.map { try _Event(serializedBytes: $0.serializedData()) }
+        XCTAssertEqual(decoded[0].outline, "紹介\n二行目")
+        XCTAssertTrue(decoded[0].hasOutline)
+        XCTAssertEqual(decoded[1].outline, "")
+        XCTAssertTrue(decoded[1].hasOutline)
+        XCTAssertTrue(decoded.dropFirst(2).allSatisfy { !$0.hasOutline })
+        for stories in [#"[{"eventId":50,"outline":42}]"#, #"[{"eventId":50},{"eventId":50}]"#] {
+            XCTAssertThrowsError(try convertEventArray(
+                events: data(#"[{"id":50}]"#), stories: data(stories),
+                bonuses: data("[]"), cards: data("[]"), musics: data("[]")
+            ))
+        }
+    }
+
     func testHistoricalEventUnitsAndPatchBoundary() throws {
         let events = try convertEventArray(
             events: data(#"[{"id":1,"unit":"none"},{"id":14},{"id":8,"unit":"none"},{"id":37,"unit":"street"},{"id":41,"unit":"none"},{"id":42,"unit":"none"},{"id":43,"unit":"idol"},{"id":44},{"id":45,"unit":"none"}]"#),
-            bonuses: data("[]"), cards: data("[]"), musics: data("[]")
+            stories: data("[]"), bonuses: data("[]"), cards: data("[]"), musics: data("[]")
         )
         let decoded = try events.map { try _Event(serializedBytes: $0.serializedData()) }
         XCTAssertEqual(decoded.map(\.unit), [
@@ -152,7 +179,7 @@ final class ConversionTests: XCTestCase {
         try await writeList(_EventList.self, to: url) { _ in
             try convertEventArray(
                 events: self.data(#"[{"id":1,"unit":"none"},{"id":14,"unit":"none"},{"id":4,"unit":"none"},{"id":43,"unit":"idol"}]"#),
-                bonuses: self.data("[]"), cards: self.data("[]"), musics: self.data("[]")
+                stories: self.data("[]"), bonuses: self.data("[]"), cards: self.data("[]"), musics: self.data("[]")
             )
         }
         let list = try _EventList(serializedBytes: Data(contentsOf: url))

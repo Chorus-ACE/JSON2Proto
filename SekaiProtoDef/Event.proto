@@ -36,6 +36,8 @@ message _Event {
     repeated int32 music_ids = 23;
     optional int32 focus_character_id = 24;
     optional int32 focus_character_index = 25;
+    // Regional eventStories.outline, joined by eventId.
+    optional string outline = 26;
 }
 
 message _EventRankingRewardRange {

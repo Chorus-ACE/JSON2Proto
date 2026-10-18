@@ -52,6 +52,14 @@ class UpdateAssetsTests(unittest.TestCase):
         changed["converter"] = "new-converter"
         self.assertTrue(update.needs_update(changed, self.state, self.published))
 
+    def test_regional_event_outline_changes_require_conversion(self):
+        self.assertIn("eventStories", update.TABLES)
+        for locale in update.REPOSITORIES:
+            with self.subTest(locale=locale):
+                changed = copy.deepcopy(self.snapshot)
+                changed["sources"][locale]["files"]["eventStories.json"] = "updated-outline"
+                self.assertTrue(update.needs_update(changed, self.state, self.published))
+
     def test_missing_state_force_and_missing_assets_require_conversion(self):
         self.assertTrue(update.needs_update(self.snapshot, None, self.published))
         self.assertTrue(update.needs_update(self.snapshot, self.state, self.published, force=True))
