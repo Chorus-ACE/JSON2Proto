@@ -1,0 +1,257 @@
+syntax = "proto3";
+
+// Regional records are independent. Strings preserve unknown upstream categories.
+// Optional scalars preserve missing, zero, false and empty values. Dates are Unix milliseconds.
+
+message _ReleaseCondition {
+    int32 id = 1;
+    optional string sentence = 2;
+    string release_condition_type = 3;
+    optional int32 release_condition_type_id = 4;
+    optional int32 release_condition_type_level = 5;
+}
+
+message _Sticker {
+    int32 id = 1;
+    string name = 2;
+    optional string description = 3;
+    string stamp_type = 4;
+    optional string assetbundle_name = 5;
+    optional string balloon_assetbundle_name = 6;
+    optional int32 character_id1 = 7;
+    optional int32 character_id2 = 8;
+    optional int32 game_character_unit_id = 9;
+    optional int64 archive_published_at = 10;
+    optional string archive_display_type = 11;
+}
+
+message _Comic {
+    int32 id = 1;
+    string title = 2;
+    string assetbundle_name = 3;
+    optional int32 from_user_rank = 4;
+    optional int32 to_user_rank = 5;
+}
+
+message _Fixture {
+    int32 id = 1;
+    string name = 2;
+    optional int32 seq = 3;
+    optional string flavor_text = 4;
+    optional string mysekai_fixture_type = 5;
+    optional string mysekai_settable_site_type = 6;
+    optional string mysekai_settable_layout_type = 7;
+    optional string assetbundle_name = 8;
+    _FixtureSize grid_size = 9;
+    optional bool is_disassembled = 10;
+    optional bool is_game_character_action = 11;
+    optional string main_genre = 12;
+    optional string sub_genre = 13;
+    repeated _FixtureBlueprint blueprints = 14;
+    optional int32 mysekai_fixture_main_genre_id = 15;
+    optional int32 mysekai_fixture_sub_genre_id = 16;
+}
+
+message _FixtureSize {
+    optional int32 width = 1;
+    optional int32 depth = 2;
+    optional int32 height = 3;
+}
+
+message _FixtureBlueprint {
+    int32 id = 1;
+    bool is_enable_sketch = 2;
+    bool is_obtained_by_convert = 3;
+    optional int32 craft_count_limit = 4;
+    bool is_available_without_possession = 5;
+    repeated _FixtureMaterial materials = 6;
+}
+
+message _FixtureMaterial {
+    int32 id = 1;
+    optional string name = 2;
+    int32 quantity = 3;
+    optional string assetbundle_name = 4;
+    optional int32 seq = 5;
+}
+
+message _Skill {
+    int32 id = 1;
+    string description = 2;
+    string short_description = 3;
+    string description_sprite_name = 4;
+    int32 skill_filter_id = 5;
+    repeated _SkillEffect skill_effects = 6;
+}
+
+message _SkillEffect {
+    string skill_effect_type = 1;
+    optional string activate_notes_judgment_type = 2;
+    optional int32 activate_character_rank = 3;
+    optional string condition_type = 4;
+    repeated _SkillEffectDetail skill_effect_details = 5;
+    _SkillEnhanceCondition skill_enhance_condition = 6;
+}
+
+message _SkillEffectDetail {
+    int32 level = 1;
+    double activate_effect_duration = 2;
+    string activate_effect_value_type = 3;
+    int32 activate_effect_value = 4;
+}
+
+message _SkillEnhanceCondition {
+    optional string unit = 1;
+}
+
+message _Song {
+    int32 id = 1;
+    string title = 2;
+    bool is_newly_written_music = 3;
+    string creator = 4;
+    string composer = 5;
+    string arranger = 6;
+    string lyricist = 7;
+    optional int64 published_at = 8;
+    optional int64 released_at = 9;
+    repeated string tags = 10;
+    repeated string media = 11;
+    repeated _SongChart charts = 12;
+    int32 live_stage_id = 13;
+    int32 dancer_count = 14;
+    int32 self_dancer_position = 15;
+    int32 release_condition_id = 16;
+    string assetbundle_name = 17;
+    string live_talk_background_assetbundle_name = 18;
+    bool is_full_length = 19;
+    double filler_sec = 20;
+    optional int32 sec_for_music_score_maker = 21;
+    optional bool is_available_for_music_score_maker = 22;
+    repeated _SongVocal vocals = 23;
+    _ReleaseCondition release_condition = 24;
+}
+
+message _SongChart {
+    string music_difficulty = 1;
+    int32 play_level = 2;
+    int32 total_note_count = 3;
+}
+
+message _SongVocal {
+    int32 id = 1;
+    int32 music_id = 2;
+    optional string caption = 3;
+    string music_vocal_type = 4;
+    optional int64 archive_published_at = 5;
+    int32 release_condition_id = 6;
+    string assetbundle_name = 7;
+    repeated _Vocalist characters = 8;
+    _ReleaseCondition release_condition = 9;
+}
+
+message _Vocalist {
+    int32 id = 1;
+    optional string name = 2;
+    bool is_internal = 3;
+}
+
+message _MusicMeta {
+    int32 music_id = 1;
+    string difficulty = 2;
+    double music_time = 3;
+    double base_score = 4;
+    double fever_score = 5;
+    double event_rate = 6;
+}
+
+message _Episode {
+    int32 id = 1;
+    int32 parent_id = 2;
+    string kind = 3;
+    int32 number = 4;
+    string title = 5;
+    string chapter_title = 6;
+    string scenario_id = 7;
+    string scenario_path = 8;
+    optional string image_path = 9;
+}
+
+message _Character2D {
+    int32 id = 1;
+    int32 character_id = 2;
+}
+
+message _SongList {
+    repeated _Song jp = 1;
+    repeated _Song en = 2;
+    repeated _Song tc = 3;
+    repeated _Song cn = 4;
+    repeated _Song kr = 5;
+    _VocalistList outside_characters = 6;
+    repeated _MusicMeta music_meta = 7;
+}
+
+message _VocalistList {
+    repeated _Vocalist jp = 1;
+    repeated _Vocalist en = 2;
+    repeated _Vocalist tc = 3;
+    repeated _Vocalist cn = 4;
+    repeated _Vocalist kr = 5;
+}
+
+message _StickerList {
+    repeated _Sticker jp = 1;
+    repeated _Sticker en = 2;
+    repeated _Sticker tc = 3;
+    repeated _Sticker cn = 4;
+    repeated _Sticker kr = 5;
+}
+
+message _ComicList {
+    repeated _Comic jp = 1;
+    repeated _Comic en = 2;
+    repeated _Comic tc = 3;
+    repeated _Comic cn = 4;
+    repeated _Comic kr = 5;
+}
+
+message _FixtureList {
+    repeated _Fixture jp = 1;
+    repeated _Fixture en = 2;
+    repeated _Fixture tc = 3;
+    repeated _Fixture cn = 4;
+    repeated _Fixture kr = 5;
+}
+
+message _SkillList {
+    repeated _Skill jp = 1;
+    repeated _Skill en = 2;
+    repeated _Skill tc = 3;
+    repeated _Skill cn = 4;
+    repeated _Skill kr = 5;
+}
+
+message _ReleaseConditionList {
+    repeated _ReleaseCondition jp = 1;
+    repeated _ReleaseCondition en = 2;
+    repeated _ReleaseCondition tc = 3;
+    repeated _ReleaseCondition cn = 4;
+    repeated _ReleaseCondition kr = 5;
+}
+
+message _EpisodeList {
+    repeated _Episode jp = 1;
+    repeated _Episode en = 2;
+    repeated _Episode tc = 3;
+    repeated _Episode cn = 4;
+    repeated _Episode kr = 5;
+    _Character2DList character_models = 6;
+}
+
+message _Character2DList {
+    repeated _Character2D jp = 1;
+    repeated _Character2D en = 2;
+    repeated _Character2D tc = 3;
+    repeated _Character2D cn = 4;
+    repeated _Character2D kr = 5;
+}

@@ -48,18 +48,21 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
         gacha.seq = gachaJSON["seq"].int32Value
         gacha.assetBundleName = gachaJSON["assetbundleName"].stringValue
         gacha.gachaCardRarityRateGroupID = gachaJSON["gachaCardRarityRateGroupId"].int32Value
-        gacha.startAt = gachaJSON["startAt"].int64Value
-        gacha.endAt = gachaJSON["endAt"].int64Value
+        if let value = gachaJSON["startAt"].int64 { gacha.startAt = value }
+        if let value = gachaJSON["endAt"].int64 { gacha.endAt = value }
         gacha.isShowPeriod = gachaJSON["isShowPeriod"].boolValue
-        gacha.gachaCeilItemID = gachaJSON["gachaCeilItemId"].int32Value
+        if let value = gachaJSON["gachaCeilItemId"].int32 { gacha.gachaCeilItemID = value }
+        if let value = gachaJSON["spinLimit"].int32 { gacha.spinLimit = value }
+        if let value = gachaJSON["dailySpinLimit"].int32 { gacha.dailySpinLimit = value }
+        if let value = gachaJSON["drawableGachaHour"].int32 { gacha.drawableGachaHour = value }
         gacha.wishSelectCount = gachaJSON["wishSelectCount"].int32Value
         gacha.wishFixedSelectCount = gachaJSON["wishFixedSelectCount"].int32Value
         gacha.wishLimitedSelectCount = gachaJSON["wishLimitedSelectCount"].int32Value
         gacha.isSelectCharacter = gachaJSON["isSelectCharacter"].boolValue
         gacha.gachaCardRarityRates = gachaJSON["gachaCardRarityRates"].map {
             var result = _GachaCardRarityRate()
-            result.id = $0.1["id"].int32Value
-            result.groupID = $0.1["groupId"].int32Value
+            if let value = $0.1["id"].int32 { result.id = value }
+            if let value = $0.1["groupId"].int32 { result.groupID = value }
             switch $0.1["cardRarityType"].stringValue {
             case "rarity_2":
                 result.cardRarityType = .rarity2
@@ -83,6 +86,9 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
             default: break
             }
             result.rate = $0.1["rate"].floatValue
+            if let value = $0.1["rate"].double { result.preciseRate = value }
+            if let value = $0.1["cardRarityType"].string { result.rarityName = value }
+            if let value = $0.1["lotteryType"].string { result.lotteryName = value }
             return result
         }
         gacha.gachaDetails = gachaJSON["gachaDetails"].map {
@@ -92,6 +98,8 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
             result.cardID = $0.1["cardId"].int32Value
             result.weight = $0.1["weight"].int32Value
             result.isWish = $0.1["isWish"].boolValue
+            if let value = $0.1["gachaDetailWishType"].string { result.wishType = value }
+            if let value = $0.1["fixedBonusWeight"].int32 { result.fixedBonusWeight = value }
             return result
         }
         gacha.gachaBehaviors = gachaJSON["gachaBehaviors"].map {
@@ -120,11 +128,13 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
                 result.costResourceType = .gachaTicket
             default: break
             }
-            result.costResourceID = $0.1["costResourceId"].int32Value
+            if let value = $0.1["costResourceId"].int32 { result.costResourceID = value }
+            if let value = $0.1["gachaBehaviorType"].string { result.typeName = value }
+            if let value = $0.1["costResourceType"].string { result.costResourceTypeName = value }
             result.costResourceQuantity = $0.1["costResourceQuantity"].int32Value
             result.spinCount = $0.1["spinCount"].int32Value
             if let limit = $0.1["executeLimit"].int32 { result.executeLimit = limit }
-            result.groupID = $0.1["groupId"].int32Value
+            if let value = $0.1["groupId"].int32 { result.groupID = value }
             result.priority = $0.1["priority"].int32Value
             switch $0.1["resourceCategory"].stringValue {
             case "free_resource":
@@ -156,8 +166,8 @@ func convertGachaArray(data: Data) throws -> [_Gacha] {
         }
         gacha.gachaInformation = .with {
             $0.gachaID = gachaJSON["gachaInformation"]["gachaId"].int32 ?? gacha.id
-            $0.summary = gachaJSON["gachaInformation"]["summary"].stringValue
-            $0.description_p = gachaJSON["gachaInformation"]["description"].stringValue
+            if let value = gachaJSON["gachaInformation"]["summary"].string { $0.summary = value }
+            if let value = gachaJSON["gachaInformation"]["description"].string { $0.description_p = value }
         }
         result.append(gacha)
     }

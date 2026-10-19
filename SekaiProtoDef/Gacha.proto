@@ -22,10 +22,10 @@ message _Gacha {
     int32 seq = 4;
     string asset_bundle_name = 5;
     int32 gacha_card_rarity_rate_group_id = 6;
-    int64 start_at = 7;
-    int64 end_at = 8;
+    optional int64 start_at = 7;
+    optional int64 end_at = 8;
     bool is_show_period = 9;
-    int32 gacha_ceil_item_id = 10;
+    optional int32 gacha_ceil_item_id = 10;
     int32 wish_select_count = 11;
     int32 wish_fixed_select_count = 12;
     int32 wish_limited_select_count = 13;
@@ -37,6 +37,9 @@ message _Gacha {
     _GachaInformation gacha_information = 19;
     // Preserve new upstream categories even when the typed enum is unspecified.
     optional string gacha_type_name = 20;
+    optional int32 spin_limit = 21;
+    optional int32 daily_spin_limit = 22;
+    optional int32 drawable_gacha_hour = 23;
 }
 
 enum _GachaType {
@@ -94,11 +97,14 @@ enum _GachaPickupType {
 }
 
 message _GachaCardRarityRate {
-    int32 id = 1;
-    int32 group_id = 2;
+    optional int32 id = 1;
+    optional int32 group_id = 2;
     _CardRarityType card_rarity_type = 3;
     _LotteryType lottery_type = 4;
     float rate = 5;
+    optional string rarity_name = 6;
+    optional string lottery_name = 7;
+    optional double precise_rate = 8;
 }
 message _GachaDetail {
     int32 id = 1;
@@ -106,20 +112,24 @@ message _GachaDetail {
     int32 card_id = 3;
     int32 weight = 4;
     bool is_wish = 5;
+    optional string wish_type = 6;
+    optional int32 fixed_bonus_weight = 7;
 }
 message _GachaBehavior {
     int32 id = 1;
     int32 gacha_id = 2;
     _GachaBehaviorType gacha_behavior_type = 3;
     _CostResourceType cost_resource_type = 4;
-    int32 cost_resource_id = 5;
+    optional int32 cost_resource_id = 5;
     int32 cost_resource_quantity = 6;
     int32 spin_count = 7;
     optional int32 execute_limit = 8;
-    int32 group_id = 9;
+    optional int32 group_id = 9;
     int32 priority = 10;
     _GachaResourceCategory resource_category = 11;
     _GachaSpinnableType gacha_spinnable_type = 12;
+    optional string type_name = 13;
+    optional string cost_resource_type_name = 14;
 }
 message _GachaPickup {
     int32 id = 1;
@@ -129,6 +139,6 @@ message _GachaPickup {
 }
 message _GachaInformation {
     int32 gacha_id = 1;
-    string summary = 2;
-    string description = 3;
+    optional string summary = 2;
+    optional string description = 3;
 }

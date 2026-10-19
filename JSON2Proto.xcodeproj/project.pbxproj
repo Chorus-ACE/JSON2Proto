@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A7B240000000000000000011 /* AdditionalConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B240000000000000000012 /* AdditionalConversion.swift */; };
 		A7B240000000000000000003 /* EarlyEventUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99B403230833285000DCEA9 /* EarlyEventUnits.swift */; };
 		8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */; };
 		8C728EE73037101A00FBA998 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 8C728EE63037101A00FBA998 /* ArgumentParser */; };
@@ -28,6 +29,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A7B240000000000000000012 /* AdditionalConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdditionalConversion.swift; sourceTree = "<group>"; };
 		8C728ED830370FD000FBA998 /* JSON2Proto */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = JSON2Proto; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandLineEntry.swift; sourceTree = "<group>"; };
 		8C728F5B303721F900FBA998 /* WorkList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkList.swift; sourceTree = "<group>"; };
@@ -43,6 +45,7 @@
 				Character.proto,
 				Event.proto,
 				Gacha.proto,
+				Content.proto,
 			);
 			target = 8C728ED730370FD000FBA998 /* JSON2Proto */;
 		};
@@ -110,6 +113,7 @@
 			children = (
 				8C728EE230370FDB00FBA998 /* CommandLineEntry.swift */,
 				A7B240000000000000000002 /* ContentConversion.swift */,
+				A7B240000000000000000012 /* AdditionalConversion.swift */,
 				E99B403230833285000DCEA9 /* EarlyEventUnits.swift */,
 				8C728F5B303721F900FBA998 /* WorkList.swift */,
 			);
@@ -188,6 +192,7 @@
 				8C728F5D303721FD00FBA998 /* WorkList.swift in Sources */,
 				8C728EE430370FDB00FBA998 /* CommandLineEntry.swift in Sources */,
 				A7B240000000000000000001 /* ContentConversion.swift in Sources */,
+				A7B240000000000000000011 /* AdditionalConversion.swift in Sources */,
 				A7B240000000000000000003 /* EarlyEventUnits.swift in Sources */,
 			);
 		};

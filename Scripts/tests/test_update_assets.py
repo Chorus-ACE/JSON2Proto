@@ -77,7 +77,7 @@ class UpdateAssetsTests(unittest.TestCase):
         with patch.object(update, "archived_protobuf_hash", side_effect=lambda archive, name: update.file_hash(self.generated / f"{name}.proto")) as extract, \
              patch.object(update.subprocess, "run") as run:
             self.assertEqual(update.prepare_assets(self.generated, self.published), [])
-            self.assertEqual(extract.call_count, 4)
+            self.assertEqual(extract.call_count, len(update.ASSETS))
             run.assert_not_called()
 
     def test_migration_removes_raw_files_and_requires_publication(self):
@@ -137,7 +137,7 @@ class UpdateAssetsTests(unittest.TestCase):
         self.assertFalse(state_path.exists())
 
     def test_api_snapshot_includes_only_needed_files_and_pins_commit(self):
-        tree = {"tree": [{"path": f"{table}.json", "type": "blob", "sha": table} for table in update.TABLES]}
+        tree = {"tree": [{"path": f"{table}.json", "type": "blob", "sha": table} for table in update.TABLES + ("musicArtists",)]}
         tree["tree"].append({"path": "unrelated.json", "type": "blob", "sha": "unrelated"})
         commit = {"sha": "pinned-commit", "commit": {"tree": {"sha": "pinned-tree"}}}
         with patch.object(update, "fetch", side_effect=[json.dumps(commit), json.dumps(tree)]) as fetch:
@@ -178,9 +178,35 @@ class UpdateAssetsTests(unittest.TestCase):
             state_path.write_text(cached)
             with patch.object(update, "source_snapshot", side_effect=lambda locale: self.snapshot["sources"][locale]), \
                  patch.object(update.subprocess, "check_output", return_value="converter-commit\n"), \
+                 patch.object(update, "EXTERNAL_SOURCES", {}), \
                  patch.object(update, "output") as output:
                 update.check(args)
                 output.assert_called_once_with("changed", expected)
+
+
+class AdditionalSourceTests(unittest.TestCase):
+    def test_all_new_dependencies_are_tracked(self):
+        expected = {"musics", "musicTags", "musicDifficulties", "musicVocals", "outsideCharacters", "stamps", "tips", "skills", "releaseConditions", "unitStories", "cardEpisodes", "character2ds", "mysekaiFixtures", "mysekaiFixtureMainGenres", "mysekaiFixtureSubGenres", "mysekaiBlueprints", "mysekaiBlueprintMysekaiMaterialCosts", "mysekaiMaterials"}
+        self.assertTrue(expected.issubset(update.TABLES))
+        self.assertIn("shared/music_metas.json", update.EXTERNAL_SOURCES)
+
+    def test_external_changes_are_fingerprinted_and_exact_bytes_downloaded(self):
+        import base64
+        data = b'[{"music_id":1}]'
+        external = {"url": "https://example.test/meta", "sha256": hashlib.sha256(data).hexdigest(), "data": base64.b64encode(data).decode()}
+        snapshot = {"converter": "c", "sources": {}, "external": {"shared/music_metas.json": external}}
+        changed = copy.deepcopy(snapshot)
+        changed["external"]["shared/music_metas.json"]["sha256"] = "changed"
+        self.assertNotEqual(update.fingerprint(snapshot), update.fingerprint(changed))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            update.write_json(root / "snapshot.json", snapshot)
+            with patch.object(update, "fetch", side_effect=AssertionError("Must use checked bytes")):
+                update.download(argparse.Namespace(snapshot=root / "snapshot.json", input=root / "input"))
+            self.assertEqual((root / "input/shared/music_metas.json").read_bytes(), data)
+            update.write_json(root / "snapshot.json", changed)
+            with self.assertRaises(ValueError):
+                update.download(argparse.Namespace(snapshot=root / "snapshot.json", input=root / "input"))
 
 
 if __name__ == "__main__":

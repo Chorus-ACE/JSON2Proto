@@ -91,7 +91,7 @@ func indexed(_ rows: [JSON], key: String, table: String) throws -> [Int: JSON] {
     return result
 }
 
-private func decode<Message: SwiftProtobuf.Message>(_ json: JSON, as type: Message.Type) throws -> Message {
+func decode<Message: SwiftProtobuf.Message>(_ json: JSON, as type: Message.Type) throws -> Message {
     var options = JSONDecodingOptions()
     options.ignoreUnknownFields = true
     do {

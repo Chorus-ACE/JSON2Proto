@@ -19,6 +19,7 @@ struct CommandLineEntry: AsyncParsableCommand {
         try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
         let source = MasterDataSource(inputFolder: inputFolder.map { URL(filePath: $0) })
         
+        try await convertAdditionalLists(to: outputURL, source: source)
         try await convertGachaList(to: outputURL.appending(path: "gacha.proto"), source: source)
         try await convertCharacterList(to: outputURL.appending(path: "character.proto"), source: source)
         try await convertEventList(to: outputURL.appending(path: "event.proto"), source: source)

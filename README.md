@@ -9,6 +9,13 @@ lists. Each file contains all five regions (`tc` corresponds to SekaiKit's `tw`)
 | `character.proto` | `characterProfiles.json`, `gameCharacters.json`, `gameCharacterUnits.json` |
 | `event.proto` | `events.json`, `eventDeckBonuses.json`, `eventCards.json`, `eventMusics.json`, `eventStories.json`, JP `gameCharacterUnits.json` |
 | `card.proto` | `cards.json` |
+| `song.proto` | `musics`, `musicTags`, `musicDifficulties`, JP/EN `musicArtists`, `musicVocals`, `outsideCharacters`, `gameCharacters`, `releaseConditions`; shared `music_metas.json` |
+| `fixture.proto` | `mysekaiFixtures`, both genre tables, `mysekaiBlueprints`, `mysekaiBlueprintMysekaiMaterialCosts`, `mysekaiMaterials` |
+| `sticker.proto` | `stamps.json` |
+| `comic.proto` | Comic records in `tips.json` |
+| `skill.proto` | `skills.json`, including effects and level values |
+| `release_condition.proto` | `releaseConditions.json` |
+| `episode.proto` | `eventStories`, `unitStories`, `cardEpisodes`, `character2ds` |
 
 Build with the JSON2Proto Xcode scheme, or use SwiftPM (Swift 6.2 or newer):
 
@@ -19,19 +26,19 @@ swift test
 
 For reproducible offline conversions, pass `--input-folder master-data/`. That
 folder must contain `jp/`, `en/`, `tc/`, `cn/`, and `kr/`, each containing all of
-the source tables above. A failed download, invalid table, duplicate entity ID,
+the applicable source tables above, plus `shared/music_metas.json` at the input root. A failed download, invalid table, duplicate entity ID,
 or missing character join fails conversion instead of publishing partial data.
 
 The Update Assets workflow runs tests, builds, converts, and publishes only
-`gacha.aar`, `character.aar`, `event.aar`, and `card.aar` to
+the eleven corresponding `.aar` archives to
 `Chorus-ACE/Sekai-Protobuf-Assets`. Each Apple Archive contains its corresponding
 binary `.proto` file. The raw `.proto` outputs remain local build intermediates;
 legacy raw binaries are removed from the destination on the next successful run.
 The files in `SekaiProtoDef/` are schema definitions.
 
 The workflow checks every hour, on pushes, and on manual runs. Before building,
-it compares the Git blob SHAs of the 55 source JSON files (11 tables × 5 regions)
-against the last successful run stored in GitHub Actions cache. Unrelated upstream
+it compares the Git blob SHAs of all required regional source JSON files (including `musicArtists` only for JP/EN)
+against the last successful run stored in GitHub Actions cache. The external song statistics source is checked by SHA-256; its exact checked bytes are included in the snapshot so conversion cannot race a later external update. Unrelated upstream
 commits are ignored. A changed converter repository revision, missing cache, or
 missing/changed published files also triggers conversion. Manual runs have a
 `force` option to bypass this check.
@@ -81,7 +88,7 @@ arrays, preserving the power at each level in the same wire format.
 ## Updating the schema
 
 `SekaiProtoDef/` is the source of truth. Never renumber or reuse existing fields.
-After editing Character, Event or Card schemas, run:
+After editing any schema, run:
 
 ```sh
 sh Scripts/sync-protos.sh
@@ -98,4 +105,25 @@ python3 Scripts/update_assets.py prepare --generated output --published archives
 SEKAI_PROTOBUF_TEST_ASSETS="$PWD/archives" swift test --package-path ../SekaiKit
 ```
 
-Note: This lovely README.md is purely vibe-coded.
+## Joined content and migration
+
+`Content.proto` defines typed records; no JSON strings or opaque JSON payloads are stored in the archives.
+Songs include regional credits, chart levels/counts, tags, media, vocalists and resolved unlock conditions.
+The song archive also carries the complete external vocalist list and shared chart statistics.
+Fixtures include genre names and all blueprints with their material costs. A missing material master
+record preserves the referenced ID and quantity with no name; an absent blueprint is distinct from a
+blueprint with zero materials. Episode records include parent ID, kind, titles and regional asset paths;
+character mappings share their archive. Scenario bodies remain JSON and are loaded on demand by SekaiKit.
+Skills preserve fractional effect durations. Gacha additions retain unknown raw categories, optional
+limits and full double-precision rates while preserving existing field numbers and legacy enums.
+Rate rows without a source ID remain present; the client assigns a negative one-based index as their
+display identity. Fractional skill durations and composer/arranger/lyricist credits are preserved.
+
+External statistics currently use `https://storage.sekai.best/sekai-best-assets/music_metas.json`.
+If that host returns 403 or fails, the scheduled run fails without publishing partial assets or advancing
+its success state. Offline conversion accepts an explicitly supplied `shared/music_metas.json`; it never
+silently substitutes empty or fabricated statistics. Verification samples must not be published.
+
+The client requires these new archives before release. Updating source code alone does not publish them.
+For conversion-to-client parity checks, set both `SEKAI_ADDITIONAL_PROTOBUF_ASSETS` to the archive directory
+and `SEKAI_PROTOBUF_MASTER_DATA` to the offline input directory when running SekaiKit tests.

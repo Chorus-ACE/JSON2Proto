@@ -2,6 +2,7 @@
 """Check pinned master data, stage changed assets, and record successful runs."""
 
 import argparse
+import base64
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
@@ -16,13 +17,18 @@ import urllib.request
 TABLES = (
     "gachas", "characterProfiles", "gameCharacters", "gameCharacterUnits",
     "events", "eventDeckBonuses", "eventCards", "eventMusics", "cards", "eventStories",
+    "musics", "musicTags", "musicDifficulties", "musicVocals", "outsideCharacters",
+    "stamps", "tips", "skills", "releaseConditions", "unitStories", "cardEpisodes", "character2ds",
+    "mysekaiFixtures", "mysekaiFixtureMainGenres", "mysekaiFixtureSubGenres", "mysekaiBlueprints",
+    "mysekaiBlueprintMysekaiMaterialCosts", "mysekaiMaterials",
 )
 REPOSITORIES = {
     locale: f"Sekai-World/sekai-master-db{suffix}-diff"
     for locale, suffix in (("jp", ""), ("en", "-en"), ("tc", "-tc"), ("cn", "-cn"), ("kr", "-kr"))
 }
-ASSETS = ("gacha", "character", "event", "card")
-STATE_VERSION = 2
+ASSETS = ("gacha", "character", "event", "card", "song", "sticker", "comic", "skill", "release_condition", "fixture", "episode")
+EXTERNAL_SOURCES = {"shared/music_metas.json": "https://storage.sekai.best/sekai-best-assets/music_metas.json"}
+STATE_VERSION = 3
 
 
 def read_json(path):
@@ -54,7 +60,7 @@ def source_snapshot(locale):
         raise ValueError(f"Incomplete source tree: {repository}")
     blobs = {entry["path"]: entry["sha"] for entry in tree["tree"] if entry["type"] == "blob"}
     files = {}
-    for table in TABLES:
+    for table in TABLES + (("musicArtists",) if locale in ("jp", "en") else ()):
         name = f"{table}.json"
         if name not in blobs:
             raise ValueError(f"Missing source: {repository}/{name}")
@@ -67,6 +73,7 @@ def fingerprint(snapshot):
     return {
         "version": STATE_VERSION,
         "converter": snapshot["converter"],
+        "external": {name: {"url": item["url"], "sha256": item["sha256"]} for name, item in snapshot.get("external", {}).items()},
         "sources": {
             locale: {"repository": source["repository"], "files": dict(source["files"])}
             for locale, source in snapshot["sources"].items()
@@ -116,7 +123,14 @@ def check(args):
     with ThreadPoolExecutor(max_workers=5) as pool:
         sources = dict(zip(REPOSITORIES, pool.map(source_snapshot, REPOSITORIES)))
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    snapshot = {"converter": revision, "sources": sources}
+    external = {}
+    for name, url in EXTERNAL_SOURCES.items():
+        data = fetch(url)
+        if not isinstance(json.loads(data), list):
+            raise ValueError(f"Expected external array: {url}")
+        # Keep the exact checked bytes: the external host has no immutable revisions.
+        external[name] = {"url": url, "sha256": hashlib.sha256(data).hexdigest(), "data": base64.b64encode(data).decode()}
+    snapshot = {"converter": revision, "sources": sources, "external": external}
     write_json(args.snapshot, snapshot)
     try:
         state = read_json(args.state)
@@ -142,6 +156,15 @@ def download_one(source, name, destination):
 
 def download(args):
     snapshot = read_json(args.snapshot)
+    for name, item in snapshot.get("external", {}).items():
+        if name not in EXTERNAL_SOURCES:
+            raise ValueError(f"Unknown external source: {name}")
+        data = base64.b64decode(item["data"], validate=True)
+        if hashlib.sha256(data).hexdigest() != item["sha256"]:
+            raise ValueError(f"External checksum mismatch: {name}")
+        destination = Path(args.input) / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(data)
     with ThreadPoolExecutor(max_workers=5) as pool:
         tasks = [
             pool.submit(download_one, source, name, Path(args.input) / locale / name)
@@ -169,7 +192,7 @@ def prepare_assets(generated, published, state=None):
     # Validate every output before touching the checkout used for publication.
     hashes = protobuf_hashes(generated)
     if any(value is None for value in hashes.values()):
-        raise ValueError("Conversion did not produce all four nonempty Protobuf files")
+        raise ValueError("Conversion did not produce all required nonempty Protobuf files")
     changed = []
     for name in ASSETS:
         archive = published / f"{name}.aar"

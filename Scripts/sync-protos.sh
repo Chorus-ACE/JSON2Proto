@@ -5,6 +5,6 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 destination=${1:-"$root/../SekaiKit/SekaiKit/Protobuf"}
 mkdir -p "$destination"
-for name in Character Event Card; do
-    cp "$root/SekaiProtoDef/$name.proto" "$destination/$name.proto"
+for schema in "$root"/SekaiProtoDef/*.proto; do
+    cp "$schema" "$destination/$(basename "$schema")"
 done

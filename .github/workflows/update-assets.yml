@@ -38,8 +38,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .asset-update-state
-          key: asset-update-state-v2-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: asset-update-state-v2-${{ runner.os }}-
+          key: asset-update-state-v3-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: asset-update-state-v3-${{ runner.os }}-
       - name: Check source files
         id: sources
         env:
@@ -74,7 +74,7 @@ jobs:
           git config user.email "sakiko@darock.top"
           git config user.name "Sakiko Togawa"
           git commit -m 'Update Assets'
-          git push origin HEAD:main --force
+          git push origin HEAD:main
       # Record success even when upstream changes produce identical Protobuf.
       # This runs only after conversion and any required push have succeeded.
       - name: Record successful check
